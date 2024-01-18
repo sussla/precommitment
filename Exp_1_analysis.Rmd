@@ -1,0 +1,359 @@
+---
+title: "Exp_1_analysis"
+output: html_document
+date: "2024-01-18"
+---
+
+### Data Analayis for Experiment 1 of Precommitment ###
+
+# Basic R set up for analysis #
+```{r setup, include=FALSE} 
+### usefull packages ###
+library("tidyr"); library("dplyr")
+library("ggplot2"); library("data.table")
+library("ggpubr") 
+library("arm"); library("lme4")
+library("reshape2"); library("Hmisc") 
+library("psych"); library("corrplot")
+## Set working directory ##
+dataDir = '~/Documents/Github/precommitment/Exp_1_data'
+
+```
+
+# Load all the Data for analysis #
+This will create the Clean Data list and the Final Data large data frame of all participants. 
+If you want to subset to only look at the data frame of one particular subject the code looks like (CleanData$'101').
+```{r load_data, include=FALSE} 
+allFileNames <- list.files(path = dataDir)
+allData <- lapply(allFileNames, function(fileName) {
+  file <- fread(sprintf("%s/%s", dataDir, fileName)) # using fread for faster reading
+  TFCols <- c("A_alwaysBest", "B_alwaysBest", "Best_changes", "Choice_Wait",
+              "Choice_Commit", "Choice_Miss",  "Play_win_A",
+              "Play_win_B", "Play_lost", "Play_lost_chosenA", "Play_lost_chosenB", "Precomm_B",
+              "Precomm_A","Precomm_miss")
+  TFNACols <- c("Press_hit", "Press_miss")
+  file[, (TFCols) := lapply(.SD, function(x) as.numeric(as.logical(x))), .SDcols = TFCols]
+  file[, (TFNACols) := lapply(.SD, function(x) as.numeric(as.logical(x))), .SDcols = TFNACols]
+  return(file)
+})
+allDataCombined <- rbindlist(allData)
+
+# Processing each file to include additional variables
+CleanData <- lapply(allData, function(thisData) {
+  trials <- 1:96
+  thisData[, AverageValue := (OptionA + OptionB) / 2]
+  thisData[, LargerOption := pmax(OptionA, OptionB)]
+  thisData[, SmallerOption := pmin(OptionA, OptionB)]
+  thisData[, centeredLargeOption := LargerOption - mean(LargerOption)]
+  thisData[, centeredSmallOption := SmallerOption - mean(SmallerOption)]
+  thisData[, centeredDifference := difference - 16]
+  thisData[, centeredAverageValue := AverageValue - 50]
+  thisData[, trial := trials - 48]
+  return(thisData)
+})
+names(CleanData) <- unlist(lapply(allData, function(x) x$participant[1]))
+CleanDataCombined <- rbindlist(CleanData)
+FinalData <- CleanDataCombined[Choice_Miss == FALSE]
+
+## Separate the data into the first and last blocks ##
+
+# First block
+firstData <- lapply(CleanData, function(thisFile) {
+  firstPart <- thisFile[1:23, ]  # Extract the first 23 trials
+  firstPart$block <- 0  # Add a column to indicate this is the first block
+  return(firstPart)
+})
+firstDataCombined <- do.call("rbind", firstData)
+firstClean <- firstDataCombined[firstDataCombined$Choice_Miss == FALSE, ]
+# Last block
+endData <- lapply(CleanData, function(thisFile) {
+  endPart <- thisFile[73:95, ]  # Extract the last 23 trials
+  endPart$block <- 1  # Add a column to indicate this is the last block
+  return(endPart)
+})
+endDataCombined <- do.call("rbind", endData)
+endClean <- endDataCombined[endDataCombined$Choice_Miss == FALSE, ]
+# Combine first and last block
+firstEndData <- do.call("rbind", c(firstData, endData))
+firstEndClean <- firstEndData[firstEndData$Choice_Miss == FALSE, ]
+
+```
+
+# Check that success rate on the reaction time task waiting is approx. 50% #
+```{r rt_task, echo=FALSE}
+# Calculate overall success rate 
+AverageHits <- mean(na.omit(FinalData$Press_hit), na.rm = TRUE)
+sprintf('Overall success rate: %f', AverageHits)
+
+# Create and order the data frame
+df <- data.frame(Choice_Wait=FinalData$Choice_Wait, 
+                 Press_hit=FinalData$Press_hit, 
+                 participant=FinalData$participant)
+df <- df[with(df, order(Choice_Wait, participant)), ]
+
+# Calculate hit rates for each participant 
+hitRates <- sapply(CleanData, function(thisData) {
+  mean(na.omit(thisData$Press_hit), na.rm = TRUE)
+})
+hitRates <- hitRates[!is.na(hitRates)]
+
+#visualize the hit rates
+hitRatesdf <- data.frame(subj = seq_along(hitRates), hitRates)
+hitRatesdf <- subset(hitRatesdf, hitRates != 0)
+# Create the plot
+ggplot(data = hitRatesdf, aes(x = subj, y = hitRates)) + 
+  geom_point() + 
+  theme_minimal() + 
+  labs(x = "Individuals", y = "Success Rates")
+
+```
+
+# Check on how many missed trials per participant #
+```{r missed_data, echo=FALSE}
+# Calculate the number of missed choices for each participant
+MissingData <- lapply(CleanData, function(thisData) {
+  data.frame(
+    sub = unique(thisData$participant),
+    numberMissed = sum(thisData$Choice_Miss, na.rm = TRUE)
+  )
+})
+
+# Combine and order the data
+MissingData <- do.call("rbind", MissingData)
+MissingData <- MissingData[order(MissingData$numberMissed), ]
+
+```
+
+# Basic Desciptive Statistics of precommitment rates #
+```{r descriptive, echo=FALSE}
+# Average Precommit Total
+pCommitTotal <- mean(FinalData$Choice_Commit, na.rm = TRUE)
+sdCommitTotal <- sd(FinalData$Choice_Commit, na.rm = TRUE)
+
+# Average Initial Value 
+avValue <- mean(FinalData$AverageValue, na.rm = TRUE)
+sdValue <- sd(FinalData$AverageValue, na.rm = TRUE)
+
+# Table of by difference 
+differenceSummary <- FinalData %>%
+  group_by(difference) %>%
+  summarise(pCommit = mean(Choice_Commit, na.rm = TRUE))
+print(differenceSummary)
+
+pCommitSub <- FinalData %>%
+  group_by(participant) %>%
+  summarise(pCommit = mean(Choice_Commit, na.rm = TRUE))
+
+sortpCommit <- round(sort(pCommitSub$pCommit), digits = 2)
+
+# Wilcox test to see if different from optimal behavior 
+wilcoxPcommit <- wilcox.test(pCommitSub$pCommit, mu = 0.5, alternative = "two.sided")
+print(wilcoxPcommit)
+```
+
+# Differences between the initial value differences #
+```{r differences, echo=FALSE}
+
+four = FinalData[FinalData$difference == "4",]
+twelve  = FinalData[FinalData$difference == "12",]
+twenty = FinalData[FinalData$difference == "20",]
+twentyEight= FinalData[FinalData$difference == "28",]
+Small = FinalData[FinalData$difference == "4" | FinalData$difference == "12",]
+Large =  FinalData[FinalData$difference == "20" | FinalData$difference == "28",]
+#Create the data frames
+pCommitFour = data.frame(summarise(group_by(four, participant) , pCommit = mean(Choice_Commit)))
+pCommitTwelve = data.frame(summarise(group_by(twelve, participant) , pCommit = mean(Choice_Commit)))
+pCommitTwenty = data.frame(summarise(group_by(twenty, participant) , pCommit = mean(Choice_Commit)))
+pCommitTwentyEight = data.frame(summarise(group_by(twentyEight, participant) , pCommit = mean(Choice_Commit)))
+pCommitSmall = data.frame(summarise(group_by(Small, participant) , pCommit = mean(Choice_Commit)))
+pCommitLarge = data.frame(summarise(group_by(Large, participant) , pCommit = mean(Choice_Commit)))
+
+#Wilcox test of differences 
+wilcoxSmaller = wilcox.test(pCommitTwelve$pCommit, pCommitFour$pCommit, paired = TRUE)
+wilcoxLarger = wilcox.test(pCommitTwentyEight$pCommit, pCommitTwenty$pCommit, paired = TRUE)
+wilcoxMiddle = wilcox.test(pCommitTwenty$pCommit, pCommitTwelve$pCommit, paired = TRUE)
+wilcoxLarge.Small = wilcox.test(pCommitLarge$pCommit, pCommitSmall$pCommit, paired= TRUE)
+
+# box-plot graph of pCommit by difference 
+df_box = data.frame(summarise(group_by(FinalData, participant, difference), pCommit=mean(Choice_Commit)))
+ggplot(data=df_box, aes(x=difference, y=pCommit, group=difference)) +
+  geom_boxplot(fill='#A4A4A4', color="black", outlier.colour="red")+
+  theme_minimal() + 
+  labs(x="Initial Differences", y="Proportion Precommit", title="")
+
+```
+
+# Deviation from optimal #
+```{r optimal, echo=FALSE}
+
+# Summarization
+pCommitSumm <- FinalData %>%
+  group_by(participant) %>%
+  summarise(sumCommit = sum(Choice_Commit, na.rm = TRUE))
+
+sumCommit <- sum(pCommitSumm$sumCommit, na.rm = TRUE)
+
+# Chi-square test
+nTrialsTotal <- 6057
+diff <- sumCommit / nTrialsTotal
+optimalitytest <- binom.test(sumCommit, nTrialsTotal, p = 0.5, alternative = "two.sided")
+
+# Confidence Interval
+p <- 0.5
+UB <- diff + (1.64 * sqrt((p * (1 - p)) / nTrialsTotal))
+LB <- diff - (1.64 * sqrt((p * (1 - p)) / nTrialsTotal))
+
+# Create the optimal df
+diff_opt <- c(4, 12, 20, 28)
+opt <- c(0, 0, 1, 1)
+df_opt <- data.frame(diff = diff_opt, opt = opt)
+
+# Group mean and median pCommit by differences
+df_mean <- FinalData %>%
+  group_by(difference) %>%
+  summarise(pCommit = mean(Choice_Commit, na.rm = TRUE))
+
+df_graph <- FinalData %>%
+  group_by(participant, difference) %>%
+  summarise(pCommit = mean(Choice_Commit, na.rm = TRUE))
+
+df_median <- df_graph %>%
+  group_by(difference) %>%
+  summarise(pCommit = median(pCommit, na.rm = TRUE))
+
+# Plotting
+ggplot() +
+  geom_line(data = df_graph, aes(x = difference, y = pCommit, group = participant), color = "gray") +
+  geom_point(data = df_graph, aes(x = difference, y = pCommit, group = participant), color = "gray") +
+  geom_line(data = df_opt, aes(x = diff, y = opt), color = "red", size = 1) +
+  geom_point(data = df_opt, aes(x = diff, y = opt), color = "red", size = 3) +
+  geom_line(data = df_median, aes(x = difference, y = pCommit), size = 1) +
+  geom_point(data = df_median, aes(x = difference, y = pCommit), size = 3) +
+  scale_color_brewer(palette = "Paired") +
+  theme_minimal() +
+  labs(x = "Initial Differences", y = "Proportion Precommit", title = "Proportion Precommit by Initial Differences")
+
+```
+
+# Average Value #
+```{r average_value, echo=FALSE}
+# Average value = average of two initial values
+df_val <- FinalData %>%
+  group_by(AverageValue) %>%
+  summarise(pCommit = mean(Choice_Commit, na.rm = TRUE))
+
+averageGLM <- glm(pCommit ~ AverageValue, data = df_val)
+
+# Plot with geom_smooth (which fits a smoother to the data)
+ggplot(df_val, aes(x = AverageValue, y = pCommit)) +
+  geom_smooth(color = "black") +
+  theme_classic() +
+  labs(x = "Average Value", y = "Proportion Precommit", title = "Proportion of Precommit by Average Value")
+
+# Plot with geom_point
+ggplot(df_val, aes(x = AverageValue, y = pCommit)) +
+  geom_point() +
+  theme_classic() +
+  labs(x = "Average Value", y = "Proportion Precommit", title = "Proportion of Precommit by Average Value")
+
+```
+
+# Learning # 
+```{r learning, echo=FALSE}
+
+learning <- FinalData %>%
+  group_by(trial) %>%
+  summarise(pCommit = mean(Choice_Commit, na.rm = TRUE))
+
+# Plotting
+ggplot(learning, aes(x = trial, y = pCommit)) +
+  geom_smooth(color = "black") +
+  theme_minimal() +
+  labs(x = "Trial Number", y = "Proportion Precommit", title = "")
+
+ggplot(learning, aes(x = trial, y = pCommit)) +
+  geom_point() +
+  theme_classic() +
+  labs(x = "Trial Number", y = "Proportion Precommit", title = "Learning")
+
+# Data summarization for T-tests
+summarize_by_difference <- function(data, difference) {
+  data %>%
+    filter(difference == difference) %>%
+    group_by(participant) %>%
+    summarise(pCommit = mean(Choice_Commit, na.rm = TRUE))
+}
+
+# Applying the summarization function
+pCommitFirst4 <- summarize_by_difference(firstClean, 4)
+pCommitFirst12 <- summarize_by_difference(firstClean, 12)
+pCommitFirst20 <- summarize_by_difference(firstClean, 20)
+pCommitFirst28 <- summarize_by_difference(firstClean, 28)
+
+pCommitEnd4 <- summarize_by_difference(endClean, 4)
+pCommitEnd12 <- summarize_by_difference(endClean, 12)
+pCommitEnd20 <- summarize_by_difference(endClean, 20)
+pCommitEnd28 <- summarize_by_difference(endClean, 28)
+
+# T-tests
+testFour <- t.test(pCommitEnd4$pCommit, pCommitFirst4$pCommit, paired = TRUE)
+testTwelve <- t.test(pCommitEnd12$pCommit, pCommitFirst12$pCommit, paired = TRUE)
+testTwenty <- t.test(pCommitEnd20$pCommit, pCommitFirst20$pCommit, paired = TRUE)
+testTwentyEight <- t.test(pCommitEnd28$pCommit, pCommitFirst28$pCommit, paired = TRUE)
+
+# GLMMs
+firstDiffModel <- glmer(Choice_Commit ~ centeredDifference + (1 | participant), data = firstClean, family = binomial, nAGQ = 0)
+endDiffModel <- glmer(Choice_Commit ~ centeredDifference + (1 | participant), data = endClean, family = binomial, nAGQ = 0)
+
+firstValueModel <- glmer(Choice_Commit ~ centeredAverageValue + (1 | participant), data = firstClean, family = binomial, nAGQ = 0)
+endValueModel <- glmer(Choice_Commit ~ centeredAverageValue + (1 | participant), data = endClean, family = binomial, nAGQ = 0)
+
+## Learning Graphs ##
+#Seperated into four different plots 
+four = FinalData[FinalData$difference == "4",]
+twelve  = FinalData[FinalData$difference == "12",]
+twenty = FinalData[FinalData$difference == "20",]
+twentyEight= FinalData[FinalData$difference == "28",]
+
+learnFour = data.frame(summarise(group_by(four, trial), pCommit=mean(Choice_Commit)))
+learnTwelve = data.frame(summarise(group_by(twelve, trial), pCommit=mean(Choice_Commit)))
+learnTwenty = data.frame(summarise(group_by(twenty, trial), pCommit=mean(Choice_Commit)))
+learnTwentyEight = data.frame(summarise(group_by(twentyEight, trial), pCommit=mean(Choice_Commit)))
+
+#Point plots 
+#Four
+ggplot()+
+  geom_point(data=learnFour, aes(x=trial, y=pCommit))+
+  theme_minimal() + labs(x="Trial Number", y="Proportion Precommit", title="Four")
+#Twelve
+ggplot()+
+  geom_point(data=learnTwelve, aes(x=trial, y=pCommit))+
+  theme_minimal() + labs(x="Trial Number", y="Proportion Precommit", title="Twelve")
+#Twenty
+ggplot()+
+  geom_point(data=learnTwenty, aes(x=trial, y=pCommit))+
+  theme_minimal() + labs(x="Trial Number", y="Proportion Precommit", title="Twenty")
+#TwentyEight
+ggplot()+
+  geom_point(data=learnTwentyEight, aes(x=trial, y=pCommit))+
+  theme_minimal() + labs(x="Trial Number", y="Proportion Precommit", title="TwentyEight")
+#Smooth trend plots 
+#Four
+ggplot()+
+  geom_smooth(data=learnFour, aes(x=trial, y=pCommit))+
+  theme_minimal() + labs(x="Trial Number", y="Proportion Precommit", title="Four")
+#Twelve
+ggplot()+
+  geom_smooth(data=learnTwelve, aes(x=trial, y=pCommit))+
+  theme_minimal() + labs(x="Trial Number", y="Proportion Precommit", title="Twelve")
+#Twenty
+ggplot()+
+  geom_smooth(data=learnTwenty, aes(x=trial, y=pCommit))+
+  theme_minimal() + labs(x="Trial Number", y="Proportion Precommit", title="Twenty")
+#TwentyEight
+ggplot()+
+  geom_smooth(data=learnTwentyEight, aes(x=trial, y=pCommit))+
+  theme_minimal() + labs(x="Trial Number", y="Proportion Precommit", title="TwentyEight")
+
+
+```
