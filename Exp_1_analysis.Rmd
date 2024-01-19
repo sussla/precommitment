@@ -357,3 +357,220 @@ ggplot()+
 
 
 ```
+
+
+# Models # 
+```{r models, echo=FALSE}
+
+# Model of initial value difference 
+# This model assesses the effect of Difference on Choice_Commit
+diffModel <- glmer(Choice_Commit ~ centeredDifference + (1 | participant), 
+                   data = FinalData, family = binomial, nAGQ = 0)
+
+# Model of average initial value
+# This model assesses the effect of Average Value on Choice_Commit
+valueModel <- glmer(Choice_Commit ~ centeredAverageValue + (1 | participant), 
+                    data = FinalData, family = binomial, nAGQ = 0)
+
+# Model of trial number 
+# This model assesses the effect of trial on Choice_Commit
+trialModel <- glmer(Choice_Commit ~ trial + (1 | participant), 
+                    data = FinalData, family = binomial, nAGQ = 0)
+
+# Interaction Model 
+# This model assesses the interaction between Average Value and Difference
+interactionModel <- glmer(Choice_Commit ~ centeredAverageValue + centeredDifference + 
+                          centeredAverageValue * centeredDifference + (1 | participant), 
+                          data = FinalData, family = binomial, nAGQ = 0)
+
+# Full Model 
+# This model includes all main effects and interactions with trial
+fullModel <- glmer(Choice_Commit ~ centeredAverageValue + centeredDifference + trial + 
+                   centeredAverageValue * trial + centeredDifference * trial + (1 | participant), 
+                   data = FinalData, family = binomial, nAGQ = 0)
+
+# Model Comparison 
+# Comparing all models
+modelTest <- anova(diffModel, valueModel, trialModel, interactionModel, fullModel) 
+
+# Comparing Interaction Model with Full Model
+betterTest <- anova(interactionModel, fullModel) 
+
+
+```
+
+# Individual participant coefficients #
+```{r ind_coef, echo = FALSE}
+# Get the individual beta coefficients for correlations with questionniare measures
+indBetas = list()
+for (i in 1: length(CleanData)){
+  d = CleanData[[i]]
+  par = unique(d$participant)
+  model = lm(Choice_Commit ~ centeredAverageValue * trial * centeredDifference, data=d)
+  coef = data.frame(model$coefficients)
+  coef = data.frame(t(coef), par)
+  indBetas[[i]] = coef
+}
+allindBetas = do.call("rbind", indBetas)
+
+```
+
+# Load questionnaire data #
+```{r load_questionnaires, echo = FALSE}
+## Set directory to get questionnaire data ##
+questionnaire = read.csv('~/Documents/Github/precommitment/Exp_1_questionnaire.csv')
+
+## Participant ID variable ##
+id <- questionnaire$Q1
+```
+
+# BIS-11 variables #
+``` {r BIS-11, echo=FALSE}
+
+# Load data for BIS-11
+bisdata <- questionnaire[, 31:60]
+
+# Fix reverse coding on the data
+keys <- c(-1, 1, 1, 1, 1, 1, -1, -1, -1, -1, 1, -1, -1, 1, -1, 1, 1, 1, 1, -1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1)
+clean_bis <- reverse.code(keys, bisdata, mini = 1, maxi = 4)
+
+# Calculate the full sum of the BIS
+fullsum <- rowSums(clean_bis)
+participantBisSum <- data.frame(id, fullsum)
+
+# 2nd order factors of BIS
+# Attentional factor
+attentional_indices <- c(5, 9, 11, 20, 28, 6, 24, 26)
+attentional <- clean_bis[, attentional_indices]
+attentionalSum <- rowSums(attentional)
+participantAttentional <- data.frame(id, attentionalSum)
+Attentional <- participantAttentional[order(participantAttentional$id), "attentionalSum"]
+
+# Motor factor
+motor_indices <- c(2, 3, 4, 17, 19, 22, 25, 16, 21, 23, 30)
+motor <- clean_bis[, motor_indices]
+motorSum <- rowSums(motor)
+participantMotor <- data.frame(id, motorSum)
+Motor <- participantMotor[order(participantMotor$id), "motorSum"]
+
+# Nonplanning factor
+nonplanning_indices <- c(1, 7, 8, 12, 13, 14, 10, 15, 18, 27, 29)
+nonplanning <- clean_bis[, nonplanning_indices]
+nonplanningSum <- rowSums(nonplanning)
+participantNonplanning <- data.frame(id, nonplanningSum)
+Nonplanning <- participantNonplanning[order(participantNonplanning$id), "nonplanningSum"]
+
+# Sort the main BIS data.frame
+sortBIS <- participantBisSum[order(participantBisSum$id),]
+
+# Combine full sum and 2nd order factors into one data frame
+participantBis <- data.frame(
+  FullSum = sortBIS$fullsum,
+  Attentional,
+  Motor,
+  Nonplanning
+)
+
+```
+
+# K-score calculation from MCQ #
+``` {r K-score, echo=FALSE}
+#K score calculation 
+rawdd <- questionnaire[,3:29]
+#remove repeated question
+ddminus <- rawdd[,-c(26)]
+#today = 0, later = 1
+ddfixed <- lapply(ddminus, function(x) x-1)
+#d <- data.frame(ddfixed)
+ddDF <- data.frame(id, ddfixed)
+#sort the data.frames
+sortdd <- ddDF[order(ddDF$id),]
+#remove the participant number from the dataframe 
+noIDdd <- data.frame(sortdd[, -c(1)])
+#Variables from Questionaire 
+Vi <- c(54, 55, 19, 31, 14, 47, 15, 25, 78, 40, 11, 67, 34, 27, 69, 49, 80, 24 ,33, 28, 34, 25, 41, 54, 54, 22)
+Vd <- c(55, 75, 25, 85, 25, 50, 35, 60, 80, 55, 30, 75, 35, 50, 85, 60, 85, 35, 80, 30, 50, 30, 75, 60, 80, 25)
+values <- data.frame(Vi, Vd)
+days <- c(117, 61, 53, 7, 19, 160, 13, 14, 162, 62, 7, 119, 186, 21, 91, 89, 157, 29, 14, 179, 30, 80, 20, 111, 30, 136)
+t <- as.numeric(days)
+valueDiff <- lapply(values, function(x) Vi/Vd)
+R <- valueDiff$Vi
+Rcoeff <- (1 - (1/R))
+dfKscore <- rbind(Rcoeff, t, noIDdd)
+ddData <- data.frame(t(dfKscore))
+#X1 = Rcoeff, X2 = time
+kscore <- vector(length=65)
+#loop to acquire each participants k score
+for(i in 1: 65){
+  choices <- noIDdd[i,]
+  bind <- rbind(Rcoeff=Rcoeff, t=t, choices=choices)
+  df <- data.frame(t(bind))
+  LR <- glm(choices ~ -1 + Rcoeff + t, family ="binomial", data=df)
+  k = LR$coefficients[2] / LR$coefficients[1]
+  kscore[i] = k
+  #Fix participant who always waited to 0.00016
+  kscore <- replace(kscore, kscore<0, 0.00016)
+}
+logkscore = log(kscore)
+
+```
+
+# Questionnaire correlations #
+``` {r correlations, echo=FALSE}
+# Sort pCommitSub by participant
+pCommitSub <- pCommitSub[order(pCommitSub$participant),]
+
+# Create a data frame with necessary variables
+questionnaire_df <- data.frame(
+  logkscore,
+  FullSum = participantBis$FullSum,
+  pCommit = pCommitSub$pCommit,
+  allindBetas
+)
+
+# Calculate correlation matrix
+questionnaire_COR <- cor(questionnaire_df, use = "complete.obs")
+
+# Calcualte the significnce of the correlations 
+# Initialize empty matrices p-values
+p_matrix <- matrix(NA, ncol = ncol(questionnaire_df), nrow = ncol(questionnaire_df),
+                   dimnames = list(names(questionnaire_df), names(questionnaire_df)))
+
+# Compute correlations and p-values
+for (i in 1:ncol(questionnaire_df)) {
+  for (j in 1:ncol(questionnaire_df)) {
+    temp <- cor.test(questionnaire_df[, i], questionnaire_df[, j], method = "pearson")
+    p_matrix[i, j] <- temp$p.value
+  }
+}
+
+# View the p-value matrix
+p_matrix
+
+# Define color palette for correlation plots
+col2 <- colorRampPalette(c(
+  "#053061", "#2166AC", "#4393C3", "#92C5DE", 
+  "#D1E5F0", "#FFFFFF", "#FDDBC7", "#F4A582", 
+  "#D6604D", "#B2182B", "#67001F"
+))
+
+# Correlation plot 
+corrplot(
+  questionnaire_COR, 
+  is.corr = FALSE, 
+  type = "upper", 
+  outline = TRUE, 
+  insig = "p-value", 
+  sig.level = 0.05, # Adjusted significance level
+  na.label = "NA", 
+  na.label.col = "grey", 
+  title = "Correlation Matrix", 
+  method = "color", 
+  tl.col = "black", 
+  tl.cex = 0.8, 
+  col = col2(200)
+)
+
+```
+
+

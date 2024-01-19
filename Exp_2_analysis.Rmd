@@ -1,0 +1,7 @@
+---
+title: "Exp_2_analysis"
+output: html_document
+date: "2024-01-19"
+---
+
+### Data Analayis for Experiment 2 of Precommitment ###
