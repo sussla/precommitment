@@ -7,7 +7,7 @@ date: "2024-01-18"
 ### Data Analayis for Experiment 1 of Precommitment ###
 
 # Basic R set up for analysis #
-```{r setup, include=FALSE} 
+```{r setup, echo=FALSE} 
 ### usefull packages ###
 library("tidyr"); library("dplyr")
 library("ggplot2"); library("data.table")
@@ -23,7 +23,7 @@ dataDir = '~/Documents/Github/precommitment/Exp_1_data'
 # Load all the Data for analysis #
 This will create the Clean Data list and the Final Data large data frame of all participants. 
 If you want to subset to only look at the data frame of one particular subject the code looks like (CleanData$'101').
-```{r load_data, include=FALSE} 
+```{r load_data, echo=FALSE} 
 allFileNames <- list.files(path = dataDir)
 allData <- lapply(allFileNames, function(fileName) {
   file <- fread(sprintf("%s/%s", dataDir, fileName)) # using fread for faster reading

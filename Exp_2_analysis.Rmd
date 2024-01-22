@@ -5,3 +5,230 @@ date: "2024-01-19"
 ---
 
 ### Data Analayis for Experiment 2 of Precommitment ###
+
+# Basic R set up for analysis #
+```{r setup, echo=FALSE} 
+### usefull packages ###
+library("tidyr"); library("dplyr")
+library("ggplot2"); library("data.table")
+library("ggpubr"); library("purrr")
+library("arm"); library("lme4")
+library("reshape2"); library("Hmisc") 
+library("psych"); library("corrplot")
+## Set working directory ##
+dataDir = '~/Documents/Github/precommitment/Exp_2_data'
+```
+
+# Load all the Data for analysis #
+
+This portion will create the Clean Data list and the Final Data large dataframe of all participants. 
+If you want to subset to only look at the dataframe of one particular subject the code looks like (CleanData\$'1001').
+```{r load data, echo=FALSE}
+allFileNames <- list.files(path = dataDir)
+allData <- lapply(allFileNames, function(fileName) {
+  file <- fread(sprintf("%s/%s", dataDir, fileName)) # using fread for faster reading
+  TFCols <- c("Choice_Wait", "Choice_Commit", "Choice_Miss", "Play_win_A", 
+              "Play_win_B", "Play_lost", "Play_lost_chosenA", "Play_lost_chosenB", 
+              "Precomm_B", "Precomm_A","Precomm_miss")
+  TFNACols <- c("Press_hit", "Press_miss")
+  file[, (TFCols) := lapply(.SD, function(x) as.numeric(as.logical(x))), .SDcols = TFCols]
+  file[, (TFNACols) := lapply(.SD, function(x) as.numeric(as.logical(x))), .SDcols = TFNACols]
+  return(file)
+})
+allDataCombined <- rbindlist(allData)
+
+# Processing each file to include additional variables
+CleanData <- lapply(allData, function(thisData) {
+  trials <- 1:96
+  thisData[, AverageValue := (OptionA + OptionB) / 2]
+  thisData[, LargerOption := pmax(OptionA, OptionB)]
+  thisData[, SmallerOption := pmin(OptionA, OptionB)]
+  thisData[, centeredLargeOption := LargerOption - mean(LargerOption)]
+  thisData[, centeredSmallOption := SmallerOption - mean(SmallerOption)]
+  thisData[, centeredDifference := difference - 16]
+  thisData[, centeredAverageValue := AverageValue - 50]
+  thisData[, trial := trials - 48]
+  return(thisData)
+})
+names(CleanData) <- unlist(lapply(allData, function(x) x$participant[1]))
+CleanDataCombined <- rbindlist(CleanData)
+FinalData <- CleanDataCombined[Choice_Miss == FALSE]
+
+```
+
+# Seperate the Data into a Stable and Volatile List #
+
+This portion will create two separate lists (volatileList and stableList) and data frames (volatileData and stableData)
+```{r group data, echo=FALSE}
+
+# Function to filter by condition and ensure Choice_Miss is logical
+filter_by_condition <- function(df, condition) {
+  df <- df %>% filter(Condition[1] == condition)
+
+  # Ensure Choice_Miss is a logical column
+  if(!is.logical(df$Choice_Miss)) {
+    df$Choice_Miss <- as.logical(df$Choice_Miss)
+  }
+  return(df)
+}
+
+# Apply the function to each dataframe in the list but keep as a list
+volatileList <- lapply(CleanData, filter_by_condition, condition = "Volatile")
+stableList <- lapply(CleanData, filter_by_condition, condition = "Stable")
+
+# Remove empty data frames from the lists
+volatileList <- volatileList[sapply(volatileList, nrow) > 0]
+stableList <- stableList[sapply(stableList, nrow) > 0]
+
+
+# Apply the function to each dataframe in the list and bind rows
+volatileGroup <- do.call(rbind, lapply(CleanData, filter_by_condition, condition = "Volatile"))
+stableGroup <- do.call(rbind, lapply(CleanData, filter_by_condition, condition = "Stable"))
+
+# Filter out Choice_Miss == TRUE
+volatileData <- volatileGroup %>% filter(!Choice_Miss)
+stableData <- stableGroup %>% filter(!Choice_Miss)
+
+```
+
+# Check on how many missed trials per participant #
+
+The largest missing data participants over 10%: Stable: 1083(12); 1028(18); 1182(20) Volatile: 1166(15); 1147(17)
+```{r missing, echo=FALSE}
+
+# Function to calculate missing data for each group
+calculate_missing_data <- function(data_group) {
+  map_dfr(data_group, function(df) {
+    data.frame(
+      participant = unique(df$participant),
+      numberMissed = sum(as.logical(df$Choice_Miss), na.rm = TRUE)
+    )
+  }) %>%
+  arrange(numberMissed) %>%
+  mutate(averageMissing = mean(numberMissed))
+}
+
+# Calculate missing data for all participants, stable, and volatile conditions
+allMissingData <- calculate_missing_data(CleanData)
+stableMissingData <- calculate_missing_data(stableList)
+volatileMissingData <- calculate_missing_data(volatileList)
+
+# Check for difference between stable and volatile groups
+missingTest <- t.test(stableMissingData$numberMissed, volatileMissingData$numberMissed)
+
+```
+
+# Check that the success rate on the reaction time task waiting is approx. 50% #
+``` {r RT, echo=FALSE}
+
+#Basic RT success check for all participants
+Hits = na.omit(FinalData$Press_hit)
+AverageHits = mean(Hits)
+sprintf('Overall success rate: %f', AverageHits)
+
+#Check on success rates for each individual participant 
+hitRates = c()
+subj = c()
+for(i in 1: length(CleanData)){
+  thisData = CleanData[[i]]
+  subj[i] = unique(thisData$participant)
+  hit = na.omit(thisData$Press_hit)
+  hitRates[i] = mean(hit)
+}
+hitRatesEval = data.frame(subj, hitRates)
+hitRates = hitRates[!is.na(hitRates)]
+Mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+Mode(hitRates)
+
+# Hit rates in stable condition 
+StablehitRates = c()
+Stablesubj = c()
+for(i in 1: length(stableList)){
+  thisData = stableList[[i]]
+  Stablesubj[i] = unique(thisData$participant)
+  hit = na.omit(thisData$Press_hit)
+  StablehitRates[i] = mean(hit)
+}
+StablehitRates = StablehitRates[!is.na(StablehitRates)]
+meanStablehit = mean(StablehitRates)
+
+# Hit rates in volatile condition 
+VolatilehitRates = c()
+Volatilesubj = c()
+for(i in 1: length(volatileGroup)){
+  thisData = volatileList[[i]]
+  Volatilesubj[i] = unique(thisData$participant)
+  hit = na.omit(thisData$)
+  VolatilehitRates[i] = mean(hit)
+}
+VolatilehitRates = VolatilehitRates[!is.na(VolatilehitRates)]
+meanVolatilehit = mean(VolatilehitRates)
+
+#test the difference bewteen the two conditions 
+hitRatesTest = t.test(StablehitRates, VolatilehitRates)
+
+# Visualize the Rates
+subj = seq(from=1,to=length(hitRates),by=1)
+hitRatesdf = data.frame(subj, hitRates)
+sortedHitRates = hitRatesEval[order(hitRatesEval$hitRates),]
+# Remove instances when the rate is 0
+zero = apply(hitRatesdf, 1, function(x) all(x !=0 ))
+hitRatesdf = hitRatesdf[zero,]
+#Create plot 
+ggplot(data=hitRatesdf, aes(x=subj, hitRates)) + geom_point() + 
+  theme_minimal() + labs(x="individuals", y="success rates")
+
+
+```
+
+
+# Start looking at basic checks of Data #
+```{r, echo=FALSE}
+#### All participants combined #####
+
+#Average Precommit Total
+pCommitTotal = mean(FinalData$Choice_Commit)
+sprintf('Overall proportion Precommit: %f', pCommitTotal)
+
+#Table for by the initial differences
+print(data.frame(summarise(group_by(FinalData, All_difference=difference) , pCommit = mean(Choice_Commit))))
+pCommitSub <- FinalData %>%
+              group_by(participant, Condition) %>%
+              summarise(pCommit = mean(Choice_Commit, na.rm = TRUE))
+
+
+#### Participants Divided by Condition ####
+
+#Average Precommit Total
+pCommitVolatile = mean(volatileData$Choice_Commit)
+medianVolatile = median(volatileData$Choice_Commit)
+sprintf('Overall proportion Precommit in Volatile Condition: %f', pCommitVolatile)
+pCommitStable = mean(stableData$Choice_Commit)
+sprintf('Overall proportion Precommit in Stable Condition: %f', pCommitStable)
+
+#Table for by the initial differences
+#Volatile 
+print(data.frame(summarise(group_by(volatileData, Volatile_difference=difference) , pCommit = mean(Choice_Commit))))
+volDif = glm(Choice_Commit ~ difference, data=volatileData)
+#Stable
+print(data.frame(summarise(group_by(stableData, Stable_difference=difference) , pCommit = mean(Choice_Commit))))
+staDif = glm(Choice_Commit ~ difference, data=stableData)
+#Look at individual pCommits per group
+#Volatile
+pCommitSubVolatile = data.frame(summarise(group_by(volatileData, participant) , pCommit = mean(Choice_Commit)))
+#Stable
+pCommitSubStable = data.frame(summarise(group_by(stableData, participant) , pCommit = mean(Choice_Commit)))
+
+### T test comparison of the two different conditions ###
+#T-test
+tTestCommit <- wilcox.test(volatileData$Choice_Commit, stableData$Choice_Commit, paired=FALSE)
+
+#### Average Value Effect ### 
+avGlm = glm(Choice_Commit ~ AverageValue, data=FinalData)
+avStable = glm(Choice_Commit ~ AverageValue, data=stableData)
+avVolatile = glm(Choice_Commit ~ AverageValue, data=volatileData)
+
+```
