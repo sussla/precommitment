@@ -57,7 +57,6 @@ FinalData <- CleanDataCombined[Choice_Miss == FALSE]
 ```
 
 # Seperate the Data into a Stable and Volatile List #
-
 This portion will create two separate lists (volatileList and stableList) and data frames (volatileData and stableData)
 ```{r group data, echo=FALSE}
 
@@ -381,7 +380,7 @@ anovaVolatile = anova(volatileDifference, volatileTrial, volatileAverageValue, v
 
 ```
 
-# Complete full model comparison
+# Complete full model comparison #
 ```{r model_comp, echo=FALSE}
 
 ## Start with full model ##
@@ -412,7 +411,7 @@ anovaVolatile = anova(volatile_1, volatile_2, volatile_3, volatile_4, volatile_5
 
 ```
 
-# Fit models to individual participants 
+# Fit models to individual participants #
 ```{r ind_models, echo=FALSE}
 # Model for Volatile -> Choice_Commit ~ centeredAverageValue * trial * centeredDifference  + (1  | participant), data= volatileData, family=binomial, nAGQ = 0
 # model for Stable ->  Choice_Commit ~ centeredAverageValue * trial * centeredDifference  + (1  | participant), data= stableData, family=binomial, nAGQ = 0
@@ -468,3 +467,73 @@ t.test(allStableBetas$trial, allVolatileBetas$trial)
 t.test(allStableBetas$trial.centeredDifference, allVolatileBetas$trial.centeredDifference)
 
 ```
+
+# Load questionnaire data #
+```{r load_questionnaires, echo=FALSE}
+## Set directory to get questionnaire data ##
+questionnaire = read.csv('~/Documents/Github/precommitment/Exp_2_questionnaire.csv')
+
+## Number with missing data ##
+numMissing = as.numeric(complete.cases(questionnaire))
+# Change that one participant 
+questionnaire[98,1] = 1100
+questionnaire[159,1] = 1163
+questionnaire[106,1] = 1108
+#Remove participant with missing data 
+questionnaire = questionnaire[-c(54, 68, 71, 109, 167),]
+
+## Participant ID variable ##
+id = questionnaire$Q1
+pCommitQual = pCommitSub[-71,]
+```
+
+# BIS-11 variables #
+```{r BIS, echo=FALSE}
+# Function to replace missing values with median
+replace_missing_with_median <- function(data) {
+  for (i in 1:nrow(data)) {
+    data[i,][is.na(data[i,])] <- median(na.omit(data[i,]))
+  }
+  data
+}
+
+# BIS Data Preparation
+bisdata <- questionnaire[, 31:60]
+keys <- c(-1,1,1,1,1,1,-1,-1,-1,-1,1,-1,-1,1,-1,1,1,1,1,-1,1,1,1,1,1,1,1,1,-1,-1)
+clean_bis <- reverse.code(keys, bisdata, mini=1, maxi=4)
+clean_bis <- replace_missing_with_median(clean_bis)
+
+# Function to calculate sum and sort
+calculate_and_sort <- function(data, id, columns) {
+  sum_data <- rowSums(data[, columns])
+  sorted_data <- data.frame(id, sum_data)[order(id),]
+}
+
+# Calculating sums
+participantBisSum <- calculate_and_sort(clean_bis, id, 1:ncol(clean_bis))
+participantAttentional <- calculate_and_sort(clean_bis, id, c(5,9,11,20,28,6,24,26))
+participantMotor <- calculate_and_sort(clean_bis, id, c(2,3,4,17,19,22,25,16,21,23,30))
+participantNonplanning <- calculate_and_sort(clean_bis, id, c(1,7,8,12,13,14,10,15,18,27,29))
+
+# Creating Full_BIS DataFrame
+Full_BIS <- data.frame(Bis_score = participantBisSum, Attentional = participantAttentional$sum_data, 
+                       Motor = participantMotor$sum_data, Nonplanning = participantNonplanning$sum_data)
+dfBIS = data.frame(pCommitQual, Full_BIS)
+# Separate into the two different groups 
+bisStable = dfBIS[which(dfBIS$Condition=="Stable"),]
+bisVolatile = dfBIS[which(dfBIS$Condition=="Volatile"),]
+
+# Function for Correlation Computation
+calculate_correlations <- function(data, variable) {
+  expression_text <- paste("cor.test(data$pCommit, data$", variable, ")", sep = "")
+  eval(parse(text = expression_text))
+}
+
+# Computing Correlations
+Full_correlations <- lapply(names(Full_BIS)[-1], function(var) calculate_correlations(dfBIS, var))
+Stable_correlations <- lapply(names(Full_BIS)[-1], function(var) calculate_correlations(bisStable, var))
+Volatile_correlations <- lapply(names(Full_BIS)[-1], function(var) calculate_correlations(bisVolatile, var))
+
+```
+
+
