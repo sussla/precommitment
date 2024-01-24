@@ -16,7 +16,7 @@ library("arm"); library("lme4")
 library("reshape2"); library("Hmisc") 
 library("psych"); library("corrplot")
 ## Set working directory ##
-dataDir = '~/Documents/Github/precommitment/Exp_1_data'
+dataDir <- '~/Documents/Github/precommitment/Exp_1_data'
 
 ```
 
@@ -154,28 +154,28 @@ print(wilcoxPcommit)
 # Differences between the initial value differences #
 ```{r differences, echo=FALSE}
 
-four = FinalData[FinalData$difference == "4",]
-twelve  = FinalData[FinalData$difference == "12",]
-twenty = FinalData[FinalData$difference == "20",]
-twentyEight= FinalData[FinalData$difference == "28",]
-Small = FinalData[FinalData$difference == "4" | FinalData$difference == "12",]
-Large =  FinalData[FinalData$difference == "20" | FinalData$difference == "28",]
+four <- FinalData[FinalData$difference == "4",]
+twelve <- FinalData[FinalData$difference == "12",]
+twenty <- FinalData[FinalData$difference == "20",]
+twentyEight <- FinalData[FinalData$difference == "28",]
+Small <- FinalData[FinalData$difference == "4" | FinalData$difference == "12",]
+Large <-  FinalData[FinalData$difference == "20" | FinalData$difference == "28",]
 #Create the data frames
-pCommitFour = data.frame(summarise(group_by(four, participant) , pCommit = mean(Choice_Commit)))
-pCommitTwelve = data.frame(summarise(group_by(twelve, participant) , pCommit = mean(Choice_Commit)))
-pCommitTwenty = data.frame(summarise(group_by(twenty, participant) , pCommit = mean(Choice_Commit)))
-pCommitTwentyEight = data.frame(summarise(group_by(twentyEight, participant) , pCommit = mean(Choice_Commit)))
-pCommitSmall = data.frame(summarise(group_by(Small, participant) , pCommit = mean(Choice_Commit)))
-pCommitLarge = data.frame(summarise(group_by(Large, participant) , pCommit = mean(Choice_Commit)))
+pCommitFour <- data.frame(summarise(group_by(four, participant) , pCommit = mean(Choice_Commit)))
+pCommitTwelve <- data.frame(summarise(group_by(twelve, participant) , pCommit = mean(Choice_Commit)))
+pCommitTwenty <- data.frame(summarise(group_by(twenty, participant) , pCommit = mean(Choice_Commit)))
+pCommitTwentyEight <- data.frame(summarise(group_by(twentyEight, participant) , pCommit = mean(Choice_Commit)))
+pCommitSmall <- data.frame(summarise(group_by(Small, participant) , pCommit = mean(Choice_Commit)))
+pCommitLarge <- data.frame(summarise(group_by(Large, participant) , pCommit = mean(Choice_Commit)))
 
 #Wilcox test of differences 
-wilcoxSmaller = wilcox.test(pCommitTwelve$pCommit, pCommitFour$pCommit, paired = TRUE)
-wilcoxLarger = wilcox.test(pCommitTwentyEight$pCommit, pCommitTwenty$pCommit, paired = TRUE)
-wilcoxMiddle = wilcox.test(pCommitTwenty$pCommit, pCommitTwelve$pCommit, paired = TRUE)
-wilcoxLarge.Small = wilcox.test(pCommitLarge$pCommit, pCommitSmall$pCommit, paired= TRUE)
+wilcoxSmaller <- wilcox.test(pCommitTwelve$pCommit, pCommitFour$pCommit, paired = TRUE)
+wilcoxLarger <- wilcox.test(pCommitTwentyEight$pCommit, pCommitTwenty$pCommit, paired = TRUE)
+wilcoxMiddle <- wilcox.test(pCommitTwenty$pCommit, pCommitTwelve$pCommit, paired = TRUE)
+wilcoxLarge.Small <- wilcox.test(pCommitLarge$pCommit, pCommitSmall$pCommit, paired= TRUE)
 
 # box-plot graph of pCommit by difference 
-df_box = data.frame(summarise(group_by(FinalData, participant, difference), pCommit=mean(Choice_Commit)))
+df_box <- data.frame(summarise(group_by(FinalData, participant, difference), pCommit=mean(Choice_Commit)))
 ggplot(data=df_box, aes(x=difference, y=pCommit, group=difference)) +
   geom_boxplot(fill='#A4A4A4', color="black", outlier.colour="red")+
   theme_minimal() + 
@@ -310,15 +310,15 @@ endValueModel <- glmer(Choice_Commit ~ centeredAverageValue + (1 | participant),
 
 ## Learning Graphs ##
 #Seperated into four different plots 
-four = FinalData[FinalData$difference == "4",]
-twelve  = FinalData[FinalData$difference == "12",]
-twenty = FinalData[FinalData$difference == "20",]
-twentyEight= FinalData[FinalData$difference == "28",]
+four <- FinalData[FinalData$difference == "4",]
+twelve <- FinalData[FinalData$difference == "12",]
+twenty <- FinalData[FinalData$difference == "20",]
+twentyEight <- FinalData[FinalData$difference == "28",]
 
-learnFour = data.frame(summarise(group_by(four, trial), pCommit=mean(Choice_Commit)))
-learnTwelve = data.frame(summarise(group_by(twelve, trial), pCommit=mean(Choice_Commit)))
-learnTwenty = data.frame(summarise(group_by(twenty, trial), pCommit=mean(Choice_Commit)))
-learnTwentyEight = data.frame(summarise(group_by(twentyEight, trial), pCommit=mean(Choice_Commit)))
+learnFour <- data.frame(summarise(group_by(four, trial), pCommit=mean(Choice_Commit)))
+learnTwelve <- data.frame(summarise(group_by(twelve, trial), pCommit=mean(Choice_Commit)))
+learnTwenty <- data.frame(summarise(group_by(twenty, trial), pCommit=mean(Choice_Commit)))
+learnTwentyEight <- data.frame(summarise(group_by(twentyEight, trial), pCommit=mean(Choice_Commit)))
 
 #Point plots 
 #Four
@@ -358,35 +358,29 @@ ggplot()+
 
 ```
 
-
 # Models # 
 ```{r models, echo=FALSE}
 
 # Model of initial value difference 
 # This model assesses the effect of Difference on Choice_Commit
-diffModel <- glmer(Choice_Commit ~ centeredDifference + (1 | participant), 
-                   data = FinalData, family = binomial, nAGQ = 0)
+diffModel <- glmer(Choice_Commit ~ centeredDifference + (1 | participant), data = FinalData, family = binomial, nAGQ = 0)
 
 # Model of average initial value
 # This model assesses the effect of Average Value on Choice_Commit
-valueModel <- glmer(Choice_Commit ~ centeredAverageValue + (1 | participant), 
-                    data = FinalData, family = binomial, nAGQ = 0)
+valueModel <- glmer(Choice_Commit ~ centeredAverageValue + (1 | participant), data = FinalData, family = binomial, nAGQ = 0)
 
 # Model of trial number 
 # This model assesses the effect of trial on Choice_Commit
-trialModel <- glmer(Choice_Commit ~ trial + (1 | participant), 
-                    data = FinalData, family = binomial, nAGQ = 0)
+trialModel <- glmer(Choice_Commit ~ trial + (1 | participant), data = FinalData, family = binomial, nAGQ = 0)
 
 # Interaction Model 
 # This model assesses the interaction between Average Value and Difference
-interactionModel <- glmer(Choice_Commit ~ centeredAverageValue + centeredDifference + 
-                          centeredAverageValue * centeredDifference + (1 | participant), 
+interactionModel <- glmer(Choice_Commit ~ centeredAverageValue + centeredDifference + centeredAverageValue * centeredDifference + (1 | participant), 
                           data = FinalData, family = binomial, nAGQ = 0)
 
 # Full Model 
 # This model includes all main effects and interactions with trial
-fullModel <- glmer(Choice_Commit ~ centeredAverageValue + centeredDifference + trial + 
-                   centeredAverageValue * trial + centeredDifference * trial + (1 | participant), 
+fullModel <- glmer(Choice_Commit ~ centeredAverageValue + centeredDifference + trial + centeredAverageValue * trial + centeredDifference * trial + (1 | participant), 
                    data = FinalData, family = binomial, nAGQ = 0)
 
 # Model Comparison 
@@ -396,29 +390,28 @@ modelTest <- anova(diffModel, valueModel, trialModel, interactionModel, fullMode
 # Comparing Interaction Model with Full Model
 betterTest <- anova(interactionModel, fullModel) 
 
-
 ```
 
 # Individual participant coefficients #
 ```{r ind_coef, echo = FALSE}
 # Get the individual beta coefficients for correlations with questionniare measures
-indBetas = list()
+indBetas <- list()
 for (i in 1: length(CleanData)){
-  d = CleanData[[i]]
-  par = unique(d$participant)
-  model = lm(Choice_Commit ~ centeredAverageValue * trial * centeredDifference, data=d)
-  coef = data.frame(model$coefficients)
-  coef = data.frame(t(coef), par)
-  indBetas[[i]] = coef
+  d <- CleanData[[i]]
+  par <- unique(d$participant)
+  model <- lm(Choice_Commit ~ centeredAverageValue * trial * centeredDifference, data=d)
+  coef <- data.frame(model$coefficients)
+  coef <- data.frame(t(coef), par)
+  indBetas[[i]] <- coef
 }
-allindBetas = do.call("rbind", indBetas)
+allindBetas <- do.call("rbind", indBetas)
 
 ```
 
 # Load questionnaire data #
 ```{r load_questionnaires, echo = FALSE}
 ## Set directory to get questionnaire data ##
-questionnaire = read.csv('~/Documents/Github/precommitment/Exp_1_questionnaire.csv')
+questionnaire <- read.csv('~/Documents/Github/precommitment/Exp_1_questionnaire.csv')
 
 ## Participant ID variable ##
 id <- questionnaire$Q1
@@ -464,12 +457,7 @@ Nonplanning <- participantNonplanning[order(participantNonplanning$id), "nonplan
 sortBIS <- participantBisSum[order(participantBisSum$id),]
 
 # Combine full sum and 2nd order factors into one data frame
-participantBis <- data.frame(
-  FullSum = sortBIS$fullsum,
-  Attentional,
-  Motor,
-  Nonplanning
-)
+participantBis <- data.frame(FullSum = sortBIS$fullsum, Attentional, Motor, Nonplanning)
 
 ```
 
@@ -506,12 +494,12 @@ for(i in 1: 65){
   bind <- rbind(Rcoeff=Rcoeff, t=t, choices=choices)
   df <- data.frame(t(bind))
   LR <- glm(choices ~ -1 + Rcoeff + t, family ="binomial", data=df)
-  k = LR$coefficients[2] / LR$coefficients[1]
-  kscore[i] = k
+  k <- LR$coefficients[2] / LR$coefficients[1]
+  kscore[i] <- k
   #Fix participant who always waited to 0.00016
   kscore <- replace(kscore, kscore<0, 0.00016)
 }
-logkscore = log(kscore)
+logkscore <- log(kscore)
 
 ```
 
@@ -521,12 +509,7 @@ logkscore = log(kscore)
 pCommitSub <- pCommitSub[order(pCommitSub$participant),]
 
 # Create a data frame with necessary variables
-questionnaire_df <- data.frame(
-  logkscore,
-  FullSum = participantBis$FullSum,
-  pCommit = pCommitSub$pCommit,
-  allindBetas
-)
+questionnaire_df <- data.frame(logkscore, FullSum = participantBis$FullSum, pCommit = pCommitSub$pCommit, allindBetas)
 
 # Calculate correlation matrix
 questionnaire_COR <- cor(questionnaire_df, use = "complete.obs")

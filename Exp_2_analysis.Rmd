@@ -16,7 +16,7 @@ library("arm"); library("lme4")
 library("reshape2"); library("Hmisc") 
 library("psych"); library("corrplot")
 ## Set working directory ##
-dataDir = '~/Documents/Github/precommitment/Exp_2_data'
+dataDir <- '~/Documents/Github/precommitment/Exp_2_data'
 ```
 
 # Load all the Data for analysis #
@@ -119,65 +119,64 @@ missingTest <- t.test(stableMissingData$numberMissed, volatileMissingData$number
 # Check that the success rate on the reaction time task waiting is approx. 50% #
 ``` {r RT, echo=FALSE}
 #Basic RT success check for all participants
-Hits = na.omit(FinalData$Press_hit)
-AverageHits = mean(Hits)
+Hits <- na.omit(FinalData$Press_hit)
+AverageHits <- mean(Hits)
 sprintf('Overall success rate: %f', AverageHits)
 
 #Check on success rates for each individual participant 
-hitRates = c()
-subj = c()
+hitRates <- c()
+subj <- c()
 for(i in 1: length(CleanData)){
-  thisData = CleanData[[i]]
-  subj[i] = unique(thisData$participant)
-  hit = na.omit(thisData$Press_hit)
-  hitRates[i] = mean(hit)
+  thisData <- CleanData[[i]]
+  subj[i] <- unique(thisData$participant)
+  hit <- na.omit(thisData$Press_hit)
+  hitRates[i] <- mean(hit)
 }
-hitRatesEval = data.frame(subj, hitRates)
-hitRates = hitRates[!is.na(hitRates)]
+hitRatesEval <- data.frame(subj, hitRates)
+hitRates <- hitRates[!is.na(hitRates)]
 Mode <- function(x) {
   ux <- unique(x)
   ux[which.max(tabulate(match(x, ux)))]
 }
-Mode_hits = Mode(hitRates)
+Mode_hits <- Mode(hitRates)
 
 # Hit rates in stable condition 
-StablehitRates = c()
-Stablesubj = c()
+StablehitRates <- c()
+Stablesubj <- c()
 for(i in 1: length(stableList)){
-  thisData = stableList[[i]]
-  Stablesubj[i] = unique(thisData$participant)
-  hit = na.omit(thisData$Press_hit)
-  StablehitRates[i] = mean(hit)
+  thisData <- stableList[[i]]
+  Stablesubj[i] <- unique(thisData$participant)
+  hit <- na.omit(thisData$Press_hit)
+  StablehitRates[i] <- mean(hit)
 }
-StablehitRates = StablehitRates[!is.na(StablehitRates)]
-meanStablehit = mean(StablehitRates)
+StablehitRates <- StablehitRates[!is.na(StablehitRates)]
+meanStablehit <- mean(StablehitRates)
 
 # Hit rates in volatile condition 
-VolatilehitRates = c()
-Volatilesubj = c()
+VolatilehitRates <- c()
+Volatilesubj <- c()
 for(i in 1: length(volatileGroup)){
-  thisData = volatileList[[i]]
-  Volatilesubj[i] = unique(thisData$participant)
-  hit = na.omit(thisData$Press_hit)
-  VolatilehitRates[i] = mean(hit)
+  thisData <- volatileList[[i]]
+  Volatilesubj[i] <- unique(thisData$participant)
+  hit <- na.omit(thisData$Press_hit)
+  VolatilehitRates[i] <- mean(hit)
 }
-VolatilehitRates = VolatilehitRates[!is.na(VolatilehitRates)]
-meanVolatilehit = mean(VolatilehitRates)
+VolatilehitRates <- VolatilehitRates[!is.na(VolatilehitRates)]
+meanVolatilehit <- mean(VolatilehitRates)
 
-#test the difference bewteen the two conditions 
-hitRatesTest = t.test(StablehitRates, VolatilehitRates)
+#test the difference between the two conditions 
+hitRatesTest <- t.test(StablehitRates, VolatilehitRates)
 
 # Visualize the Rates
-subj = seq(from=1,to=length(hitRates),by=1)
-hitRatesdf = data.frame(subj, hitRates)
-sortedHitRates = hitRatesEval[order(hitRatesEval$hitRates),]
+subj <- seq(from=1,to=length(hitRates),by=1)
+hitRatesdf <- data.frame(subj, hitRates)
+sortedHitRates <- hitRatesEval[order(hitRatesEval$hitRates),]
 # Remove instances when the rate is 0
-zero = apply(hitRatesdf, 1, function(x) all(x !=0 ))
-hitRatesdf = hitRatesdf[zero,]
+zero <- apply(hitRatesdf, 1, function(x) all(x !=0 ))
+hitRatesdf <- hitRatesdf[zero,]
 #Create plot 
 ggplot(data=hitRatesdf, aes(x=subj, hitRates)) + geom_point() + 
   theme_minimal() + labs(x="individuals", y="success rates")
-
 
 ```
 
@@ -186,7 +185,7 @@ ggplot(data=hitRatesdf, aes(x=subj, hitRates)) + geom_point() +
 #### All participants combined #####
 
 #Average Precommit Total
-pCommitTotal = mean(FinalData$Choice_Commit)
+pCommitTotal <- mean(FinalData$Choice_Commit)
 sprintf('Overall proportion Precommit: %f', pCommitTotal)
 
 #Table for by the initial differences
@@ -198,33 +197,33 @@ pCommitSub <- FinalData %>%
 #### Participants Divided by Condition ####
 
 #Average Precommit Total
-pCommitVolatile = mean(volatileData$Choice_Commit)
-medianVolatile = median(volatileData$Choice_Commit)
+pCommitVolatile <- mean(volatileData$Choice_Commit)
+medianVolatile <- median(volatileData$Choice_Commit)
 sprintf('Overall proportion Precommit in Volatile Condition: %f', pCommitVolatile)
-pCommitStable = mean(stableData$Choice_Commit)
+pCommitStable <- mean(stableData$Choice_Commit)
 sprintf('Overall proportion Precommit in Stable Condition: %f', pCommitStable)
 
 #Table for by the initial differences
 #Volatile 
 print(data.frame(summarise(group_by(volatileData, Volatile_difference=difference) , pCommit = mean(Choice_Commit))))
-volDif = glm(Choice_Commit ~ difference, data=volatileData)
+volDif <- glm(Choice_Commit ~ difference, data=volatileData)
 #Stable
 print(data.frame(summarise(group_by(stableData, Stable_difference=difference) , pCommit = mean(Choice_Commit))))
-staDif = glm(Choice_Commit ~ difference, data=stableData)
+staDif <- glm(Choice_Commit ~ difference, data=stableData)
 #Look at individual pCommits per group
 #Volatile
-pCommitSubVolatile = data.frame(summarise(group_by(volatileData, participant) , pCommit = mean(Choice_Commit)))
+pCommitSubVolatile <- data.frame(summarise(group_by(volatileData, participant) , pCommit = mean(Choice_Commit)))
 #Stable
-pCommitSubStable = data.frame(summarise(group_by(stableData, participant) , pCommit = mean(Choice_Commit)))
+pCommitSubStable <- data.frame(summarise(group_by(stableData, participant) , pCommit = mean(Choice_Commit)))
 
 ### T test comparison of the two different conditions ###
 #T-test
 tTestCommit <- wilcox.test(volatileData$Choice_Commit, stableData$Choice_Commit, paired=FALSE)
 
 #### Average Value Effect ### 
-avGlm = glm(Choice_Commit ~ AverageValue, data=FinalData)
-avStable = glm(Choice_Commit ~ AverageValue, data=stableData)
-avVolatile = glm(Choice_Commit ~ AverageValue, data=volatileData)
+avGlm <- glm(Choice_Commit ~ AverageValue, data=FinalData)
+avStable <- glm(Choice_Commit ~ AverageValue, data=stableData)
+avVolatile <- glm(Choice_Commit ~ AverageValue, data=volatileData)
 
 ```
 
@@ -250,7 +249,7 @@ volatilefirstCombined <- do.call("rbind", firstVolatile)
 volatileFirstData <- volatilefirstCombined[volatilefirstCombined$Choice_Miss == F,]
 #volatile - last 
 volatilelastCombined <- do.call("rbind", lastVolatile)
-volatileLastData = volatilelastCombined[volatilelastCombined$Choice_Miss == F,]
+volatileLastData <- volatilelastCombined[volatilelastCombined$Choice_Miss == F,]
 #stable - first 
 stablefirstCombined <- do.call("rbind", firstStable)
 stableFirstData <- stablefirstCombined[stablefirstCombined$Choice_Miss == F,]
@@ -280,8 +279,8 @@ volatileLastpCommit <- summarize_group(volatileLastData)
 stableLastpCommit <- summarize_group(stableLastData)
 
 #See if significant differences 
-wilcoxVolatile = wilcox.test(volatileFirstpCommit$pCommit, volatileLastpCommit$pCommit, paired = TRUE)
-wilcoxStable = wilcox.test(stableFirstpCommit$pCommit, stableLastpCommit$pCommit, paired = TRUE)
+wilcoxVolatile <- wilcox.test(volatileFirstpCommit$pCommit, volatileLastpCommit$pCommit, paired = TRUE)
+wilcoxStable <- wilcox.test(stableFirstpCommit$pCommit, stableLastpCommit$pCommit, paired = TRUE)
 
 #Print the findings
 sprintf('pCommit first Volatile: %f', pCommit_FirstVolatile)
@@ -305,17 +304,17 @@ volatile_df <- prepare_plot_data(volatileFirstData, volatileLastData, 1, 4)
 
 # Plotting code
 # plot stable change from first to last block 
-stable_change_plot = ggplot()+
+stable_change_plot <- ggplot()+
   geom_point(data=stable_df, aes(x=block, y=pCommit, group=participant), color="lightblue")+ 
   geom_line(data=stable_df, aes(x=block, y=pCommit, group=participant), color="lightblue")+ 
   theme_minimal() + labs(x="Block", y="Proportion Precommit", title="Stable")
 # plot volatile change from first to last block 
-volatile_change_plot = ggplot()+
+volatile_change_plot <- ggplot()+
   geom_point(data=volatile_df, aes(x=block, y=pCommit, group=participant), color="darkblue")+ 
   geom_line(data=volatile_df, aes(x=block, y=pCommit, group=participant), color="darkblue")+ 
   theme_minimal() + labs(x="Block", y="Proportion Precommit", title="Volatile")
 #Plot of both Stable and Volatile change
-full_change_plot = ggplot()+
+full_change_plot <- ggplot()+
   geom_point(data=volatile_df, aes(x=block, y=pCommit, group=participant), color="darkblue")+ 
   geom_line(data=volatile_df, aes(x=block, y=pCommit, group=participant), color="darkblue")+ 
   geom_point(data=stable_df, aes(x=block, y=pCommit, group=participant), color="lightblue")+ 
@@ -329,54 +328,54 @@ full_change_plot = ggplot()+
 #### All data combined #### 
 
 # First test if condition had an effect 
-groupModel = glmer(Choice_Commit ~  Condition  + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
+groupModel <- glmer(Choice_Commit ~  Condition  + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
 # full model 
-fullModel = glmer(Choice_Commit ~ centeredAverageValue * trial * centeredDifference  + (1 | participant), data= FinalData, family=binomial, nAGQ = 0)
+fullModel <- glmer(Choice_Commit ~ centeredAverageValue * trial * centeredDifference  + (1 | participant), data= FinalData, family=binomial, nAGQ = 0)
 
 # Trial only
-fullTrial = glmer(Choice_Commit ~  trial  + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
+fullTrial <- glmer(Choice_Commit ~  trial  + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
 # Trial and condition 
-fullTrialCondition = glmer(Choice_Commit ~  trial  * Condition + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
+fullTrialCondition <- glmer(Choice_Commit ~  trial  * Condition + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
 
 # Average Value only 
-fullAverageValue = glmer(Choice_Commit ~  centeredAverageValue  + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
+fullAverageValue <-  glmer(Choice_Commit ~  centeredAverageValue  + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
 
 # Difference Only 
-fullDifference = glmer(Choice_Commit ~  centeredDifference  + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
+fullDifference <- glmer(Choice_Commit ~  centeredDifference  + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
 
 # Interaction between difference and average value
-FullFirstinteraction = glmer(Choice_Commit ~ centeredAverageValue + centeredDifference + centeredAverageValue * centeredDifference  + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
+FullFirstinteraction <- glmer(Choice_Commit ~ centeredAverageValue + centeredDifference + centeredAverageValue * centeredDifference  + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
 # Comparison 
-anovaFull = anova(fullDifference, fullTrial, fullAverageValue, FullFirstinteraction, fullModel)
+anovaFull <- anova(fullDifference, fullTrial, fullAverageValue, FullFirstinteraction, fullModel)
 
 #### Separate Stable and Volatile Conditions #### 
 
 # Full 
-stableFull = glmer(Choice_Commit ~ centeredAverageValue * trial * centeredDifference  + (1 | participant), data= stableData, family=binomial, nAGQ = 0)
-volatileFull = glmer(Choice_Commit ~ centeredAverageValue * trial * centeredDifference  + (1 | participant), data= volatileData, family=binomial, nAGQ = 0)
+stableFull <- glmer(Choice_Commit ~ centeredAverageValue * trial * centeredDifference  + (1 | participant), data= stableData, family=binomial, nAGQ = 0)
+volatileFull <- glmer(Choice_Commit ~ centeredAverageValue * trial * centeredDifference  + (1 | participant), data= volatileData, family=binomial, nAGQ = 0)
 
 # Trial only
-stableTrial = glmer(Choice_Commit ~  trial  + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
-volatileTrial = glmer(Choice_Commit ~  trial  + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
+stableTrial <- glmer(Choice_Commit ~  trial  + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
+volatileTrial <- glmer(Choice_Commit ~  trial  + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
 
 # Average Value only 
-stableAverageValue = glmer(Choice_Commit ~  centeredAverageValue  + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
-volatileAverageValue = glmer(Choice_Commit ~  centeredAverageValue  + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
+stableAverageValue <- glmer(Choice_Commit ~  centeredAverageValue  + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
+volatileAverageValue <- glmer(Choice_Commit ~  centeredAverageValue  + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
 
 
 # Difference only 
-stableDifference = glmer(Choice_Commit ~  centeredDifference  + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
-volatileDifference = glmer(Choice_Commit ~  centeredDifference  + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
+stableDifference <- glmer(Choice_Commit ~  centeredDifference  + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
+volatileDifference <- glmer(Choice_Commit ~  centeredDifference  + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
 
 # Check on the interactions 
-stableFirstinteraction = glmer(Choice_Commit ~ centeredAverageValue + centeredDifference + centeredAverageValue * centeredDifference  + (1  | participant),
+stableFirstinteraction <- glmer(Choice_Commit ~ centeredAverageValue + centeredDifference + centeredAverageValue * centeredDifference  + (1  | participant),
                                data= stableData, family=binomial, nAGQ = 0)
-volatileFirstinteraction = glmer(Choice_Commit ~ centeredAverageValue + centeredDifference + centeredAverageValue * centeredDifference  + (1  | participant), 
+volatileFirstinteraction <- glmer(Choice_Commit ~ centeredAverageValue + centeredDifference + centeredAverageValue * centeredDifference  + (1  | participant), 
                                data= volatileData, family=binomial, nAGQ = 0)
 
 #Comparison 
-anovaStable = anova(stableDifference, stableTrial, stableAverageValue, stableFirstinteraction, stableFull)
-anovaVolatile = anova(volatileDifference, volatileTrial, volatileAverageValue, volatileFirstinteraction, volatileFull)
+anovaStable <- anova(stableDifference, stableTrial, stableAverageValue, stableFirstinteraction, stableFull)
+anovaVolatile <- anova(volatileDifference, volatileTrial, volatileAverageValue, volatileFirstinteraction, volatileFull)
 
 ```
 
@@ -384,30 +383,30 @@ anovaVolatile = anova(volatileDifference, volatileTrial, volatileAverageValue, v
 ```{r model_comp, echo=FALSE}
 
 ## Start with full model ##
-full_1  = glmer(Choice_Commit ~  Condition  + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
-full_2 = glmer(Choice_Commit ~  Condition  + trial + Condition * trial + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
-full_3 = glmer(Choice_Commit ~  Condition  + trial + centeredDifference + Condition * trial + Condition * centeredDifference + centeredDifference * trial + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
-full_4 = glmer(Choice_Commit ~  Condition  + trial + centeredAverageValue + Condition * trial + Condition * centeredAverageValue + centeredAverageValue * trial + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
-full_5 = glmer(Choice_Commit ~  Condition  + trial + centeredAverageValue + centeredDifference + Condition * trial + Condition * centeredAverageValue + Condition * centeredDifference + centeredAverageValue * trial + centeredDifference * trial + centeredDifference * centeredAverageValue + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
-anovaFull = anova(full_1, full_2, full_3, full_4, full_5)
+full_1  <- glmer(Choice_Commit ~  Condition  + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
+full_2 <- glmer(Choice_Commit ~  Condition  + trial + Condition * trial + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
+full_3 <- glmer(Choice_Commit ~  Condition  + trial + centeredDifference + Condition * trial + Condition * centeredDifference + centeredDifference * trial + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
+full_4 <- glmer(Choice_Commit ~  Condition  + trial + centeredAverageValue + Condition * trial + Condition * centeredAverageValue + centeredAverageValue * trial + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
+full_5 <- glmer(Choice_Commit ~  Condition  + trial + centeredAverageValue + centeredDifference + Condition * trial + Condition * centeredAverageValue + Condition * centeredDifference + centeredAverageValue * trial + centeredDifference * trial + centeredDifference * centeredAverageValue + (1  | participant), data= FinalData, family=binomial, nAGQ = 0)
+anovaFull <- anova(full_1, full_2, full_3, full_4, full_5)
 
 ## Model comparison for Stable ##
-stable_1 = glmer(Choice_Commit ~  trial  + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
-stable_2 = glmer(Choice_Commit ~  centeredDifference  + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
-stable_3 = glmer(Choice_Commit ~  centeredAverageValue  + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
-stable_4 = glmer(Choice_Commit ~  trial  + centeredDifference + trial * centeredDifference + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
-stable_5 = glmer(Choice_Commit ~  trial  + centeredAverageValue + trial * centeredAverageValue + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
-stable_6 = glmer(Choice_Commit ~  trial  + centeredDifference + centeredAverageValue + trial * centeredDifference  + trial * centeredAverageValue + centeredDifference * centeredAverageValue + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
-anovaStable = anova(stable_1, stable_2, stable_3, stable_4, stable_5, stable_6)
+stable_1 <- glmer(Choice_Commit ~  trial  + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
+stable_2 <- glmer(Choice_Commit ~  centeredDifference  + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
+stable_3 <- glmer(Choice_Commit ~  centeredAverageValue  + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
+stable_4 <- glmer(Choice_Commit ~  trial  + centeredDifference + trial * centeredDifference + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
+stable_5 <- glmer(Choice_Commit ~  trial  + centeredAverageValue + trial * centeredAverageValue + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
+stable_6 <- glmer(Choice_Commit ~  trial  + centeredDifference + centeredAverageValue + trial * centeredDifference  + trial * centeredAverageValue + centeredDifference * centeredAverageValue + (1  | participant), data= stableData, family=binomial, nAGQ = 0)
+anovaStable <- anova(stable_1, stable_2, stable_3, stable_4, stable_5, stable_6)
   
 ## Model comparison for Volatile ##
-volatile_1 = glmer(Choice_Commit ~  trial  + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
-volatile_2 = glmer(Choice_Commit ~  centeredDifference  + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
-volatile_3 = glmer(Choice_Commit ~  centeredAverageValue  + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
-volatile_4 = glmer(Choice_Commit ~  trial  + centeredDifference + trial * centeredDifference + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
-volatile_5 = glmer(Choice_Commit ~  trial  + centeredAverageValue + trial * centeredAverageValue + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
-volatile_6 = glmer(Choice_Commit ~  trial  + centeredDifference + centeredAverageValue + trial * centeredDifference  + trial * centeredAverageValue + centeredDifference * centeredAverageValue + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
-anovaVolatile = anova(volatile_1, volatile_2, volatile_3, volatile_4, volatile_5, volatile_6)
+volatile_1 <- glmer(Choice_Commit ~  trial  + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
+volatile_2 <- glmer(Choice_Commit ~  centeredDifference  + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
+volatile_3 <- glmer(Choice_Commit ~  centeredAverageValue  + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
+volatile_4 <- glmer(Choice_Commit ~  trial  + centeredDifference + trial * centeredDifference + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
+volatile_5 <- glmer(Choice_Commit ~  trial  + centeredAverageValue + trial * centeredAverageValue + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
+volatile_6 <- glmer(Choice_Commit ~  trial  + centeredDifference + centeredAverageValue + trial * centeredDifference  + trial * centeredAverageValue + centeredDifference * centeredAverageValue + (1  | participant), data= volatileData, family=binomial, nAGQ = 0)
+anovaVolatile <- anova(volatile_1, volatile_2, volatile_3, volatile_4, volatile_5, volatile_6)
 
 ```
 
@@ -416,17 +415,17 @@ anovaVolatile = anova(volatile_1, volatile_2, volatile_3, volatile_4, volatile_5
 # Model for Volatile -> Choice_Commit ~ centeredAverageValue * trial * centeredDifference  + (1  | participant), data= volatileData, family=binomial, nAGQ = 0
 # model for Stable ->  Choice_Commit ~ centeredAverageValue * trial * centeredDifference  + (1  | participant), data= stableData, family=binomial, nAGQ = 0
 
-allBetas = list()
+allBetas <- list()
 for (i in 1: length(CleanData)){
-  d = CleanData[[i]]
-  model = lm(Choice_Commit ~ centeredAverageValue + trial + centeredDifference + centeredAverageValue * trial + centeredAverageValue * centeredDifference + centeredDifference * trial, data=d)
-  coef = data.frame(model$coefficients)
-  coef = data.frame(t(coef))
-  par = unique(d$participant)
-  coef = data.frame(coef, par)
-  allBetas[[i]] = coef
+  d <- CleanData[[i]]
+  model <- lm(Choice_Commit ~ centeredAverageValue + trial + centeredDifference + centeredAverageValue * trial + centeredAverageValue * centeredDifference + centeredDifference * trial, data=d)
+  coef <- data.frame(model$coefficients)
+  coef <- data.frame(t(coef))
+  par <- unique(d$participant)
+  coef <- data.frame(coef, par)
+  allBetas[[i]] <- coef
 }
-allBetasCombined = do.call("rbind", allBetas)
+allBetasCombined <- do.call("rbind", allBetas)
 
 # Edit the Volatile group for the participant without the qualtrics data 
 volatileGroupCor = volatileList[-33]
@@ -442,15 +441,15 @@ for (i in 1: length(volatileGroupCor)){
 allVolatileBetas = do.call("rbind", volatileBetas)
 
 # Individual Coefficients for Stable
-stableBetas = list()
+stableBetas <- list()
 for (i in 1: length(stableList)){
-  d = stableList[[i]]
-  model = lm(Choice_Commit ~ centeredAverageValue * trial * centeredDifference, data=d)
-  coef = data.frame(model$coefficients)
-  coef = data.frame(t(coef))
-  stableBetas[[i]] = coef
+  d <- stableList[[i]]
+  model <- lm(Choice_Commit ~ centeredAverageValue * trial * centeredDifference, data=d)
+  coef <- data.frame(model$coefficients)
+  coef <- data.frame(t(coef))
+  stableBetas[[i]] <- coef
 }
-allStableBetas = do.call("rbind", stableBetas)
+allStableBetas <- do.call("rbind", stableBetas)
 
 
 ## Simple T test comparisons ##
@@ -471,20 +470,20 @@ t.test(allStableBetas$trial.centeredDifference, allVolatileBetas$trial.centeredD
 # Load questionnaire data #
 ```{r load_questionnaires, echo=FALSE}
 ## Set directory to get questionnaire data ##
-questionnaire = read.csv('~/Documents/Github/precommitment/Exp_2_questionnaire.csv')
+questionnaire <- read.csv('~/Documents/Github/precommitment/Exp_2_questionnaire.csv')
 
 ## Number with missing data ##
-numMissing = as.numeric(complete.cases(questionnaire))
+numMissing <- as.numeric(complete.cases(questionnaire))
 # Change that one participant 
-questionnaire[98,1] = 1100
-questionnaire[159,1] = 1163
-questionnaire[106,1] = 1108
+questionnaire[98,1] <- 1100
+questionnaire[159,1] <- 1163
+questionnaire[106,1] <- 1108
 #Remove participant with missing data 
-questionnaire = questionnaire[-c(54, 68, 71, 109, 167),]
+questionnaire <- questionnaire[-c(54, 68, 71, 109, 167),]
 
 ## Participant ID variable ##
-id = questionnaire$Q1
-pCommitQual = pCommitSub[-71,]
+id <- questionnaire$Q1
+pCommitQual <- pCommitSub[-71,]
 ```
 
 # BIS-11 variables #
@@ -518,10 +517,11 @@ participantNonplanning <- calculate_and_sort(clean_bis, id, c(1,7,8,12,13,14,10,
 # Creating Full_BIS DataFrame
 Full_BIS <- data.frame(Bis_score = participantBisSum, Attentional = participantAttentional$sum_data, 
                        Motor = participantMotor$sum_data, Nonplanning = participantNonplanning$sum_data)
-dfBIS = data.frame(pCommitQual, Full_BIS)
+dfBIS <- data.frame(pCommitQual, Full_BIS)
+
 # Separate into the two different groups 
-bisStable = dfBIS[which(dfBIS$Condition=="Stable"),]
-bisVolatile = dfBIS[which(dfBIS$Condition=="Volatile"),]
+bisStable <- dfBIS[which(dfBIS$Condition=="Stable"),]
+bisVolatile <- dfBIS[which(dfBIS$Condition=="Volatile"),]
 
 # Function for Correlation Computation
 calculate_correlations <- function(data, variable) {
@@ -536,4 +536,171 @@ Volatile_correlations <- lapply(names(Full_BIS)[-1], function(var) calculate_cor
 
 ```
 
+# UPPS variables #
+```{r UPPS, echo=FALSE}
+uppsData <- questionnaire[,61:119]
+
+# Function to replace missing values with median
+replace_missing_with_median <- function(data, missing_indices) {
+  for (i in missing_indices) {
+    median_value <- median(na.omit(data[i,]))
+    data[i,] <- ifelse(is.na(data[i,]), median_value, data[i,])
+  }
+  data
+}
+
+#NU: negative urgency 
+NU_data <- uppsData[,c(2,7,12,17,22,29,34,39,44,50,53,58)]
+reverse_NU <- c(-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1,-1)
+NU <- reverse.code(reverse_NU, NU_data, mini=1, maxi=4)
+#PU: positive urgency : no reverse coded items
+PU_data <- uppsData[,c(5,10,15,20,25,30,35,40,45,49,52,54,57,59)]
+reverse_PU <- c(-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1)
+PU <- reverse.code(reverse_PU, PU_data, mini=1, maxi=4)
+#PM: lack of premeditation 
+PM_data <- uppsData[,c(1,6,11,16,21,28,33,38,43,48,55)]
+reverse_PM <- c(1,1,1,1,1,1,1,1,1,1,1)
+PM <- reverse.code(reverse_PM, PM_data, mini=1, maxi=4)
+#PS: lack of perseverance
+PS_data <- uppsData[,c(4,9,14,19,24,27,32,37,42,47)]
+reverse_PS <- c(1,-1,1,1,1,1,1,1,1,-1)
+PS <- reverse.code(reverse_PS, PS_data, mini=1, maxi=4)
+#SS: sensation seeking 
+SS_data <- uppsData[,c(3,8,13,18,23,26,31,36,41,46,51,56)]
+reverse_SS <- c(-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1)
+SS <- reverse.code(reverse_SS, SS_data, mini=1, maxi=4)
+
+# Replace missing values
+missing_values <- list(PS=c(19,2), PU=c(44,11), PM=c(44,11, 85,1, 87,10, 135,13, 166,5, 173,5,7), NU=c(85,1, 173,4))
+for (data_name in names(missing_values)) {
+  assign(data_name, replace_missing_with_median(get(data_name), missing_values[[data_name]]))
+}
+
+# Compute scores
+uppsDF_1 <- data.frame(NU_score=rowSums(NU), PU_score=rowSums(PU), PM_score=rowSums(PM), PS_score=rowSums(PS), SS_score=rowSums(SS))
+UPPS <- rowSums(uppsDF_1)
+uppsDF <- data.frame(pCommitQual, uppsDF_1, UPPS)
+# Ensure pCommit is numeric
+uppsDF$pCommit <- as.numeric(as.character(uppsDF$pCommit))
+
+# Separate into the two different groups 
+uppsStable <- uppsDF[which(uppsDF$Condition=="Stable"),]
+uppsVolatile <- uppsDF[which(uppsDF$Condition=="Volatile"),]
+
+# Run the correlation tests
+Full_correlations <- lapply(names(uppsDF)[3:8], function(var) cor.test(uppsDF$pCommit, uppsDF[[var]]))
+names(Full_correlations) <- names(uppsDF)[3:8]
+Stable_correlations <- lapply(names(uppsStable)[3:8], function(var) cor.test(uppsStable$pCommit, uppsStable[[var]]))
+names(Stable_correlations) <- names(uppsStable)[3:8]
+Volatile_correlations <- lapply(names(uppsVolatile)[3:8], function(var) cor.test(uppsVolatile$pCommit, uppsVolatile[[var]]))
+names(uppsVolatile) <- names(uppsVolatile)[3:8]
+
+
+```
+
+# K-score calculation from MCQ #
+``` {r K-score, echo=FALSE}
+# K score calculation 
+rawdd <- questionnaire[,3:30]
+# remove repeated question
+ddminus <- rawdd[,-c(28)]
+# today = 0, later = 1
+ddfixed <- lapply(ddminus, function(x) x-1)
+ddDF <- data.frame(id, ddfixed)
+# sort the data.frames
+sortdd <- ddDF[order(ddDF$id),]
+#remove the participant number from the dataframe 
+noIDdd <- data.frame(sortdd[, -c(1)])
+# Variables from Questionaire 
+Vi <- c(54, 55, 19, 31, 14, 47, 15, 25, 78, 40, 11, 67, 34, 27, 69, 49, 80, 24 ,33, 28, 34, 25, 41, 54, 54, 22)
+Vd <- c(55, 75, 25, 85, 25, 50, 35, 60, 80, 55, 30, 75, 35, 50, 85, 60, 85, 35, 80, 30, 50, 30, 75, 60, 80, 25)
+values <- data.frame(Vi, Vd)
+days <- c(117, 61, 53, 7, 19, 160, 13, 14, 162, 62, 7, 119, 186, 21, 91, 89, 157, 29, 14, 179, 30, 80, 20, 111, 30, 136)
+t <- as.numeric(days)
+valueDiff <- lapply(values, function(x) Vi/Vd)
+R <- valueDiff$Vi
+Rcoeff <- (1 - (1/R))
+dfKscore <- rbind(Rcoeff, t, noIDdd)
+ddData <- data.frame(t(dfKscore))
+# X1 = Rcoeff, X2 = time
+kscore <- vector(length=64)
+# loop to acquire each participants k score
+for(i in 1: nrow(noIDdd)){
+  choices <- noIDdd[i,]
+  bind <- rbind(Rcoeff=Rcoeff, t=t, choices=choices)
+  df <- data.frame(t(bind))
+  LR <- glm(choices ~ -1 + Rcoeff + t, family ="binomial", data=df)
+  k <- LR$coefficients[2] / LR$coefficients[1]
+  kscore[i] <- k
+  # Fix participant who always waited to 0.00016
+  kscore <- replace(kscore, kscore<0, 0.00016)
+}
+logkscore = log(kscore)
+
+# Set up data frames
+Full_ddDF <- data.frame(pCommitQual, logkscore)
+dd_Stable <- Full_ddDF[which(Full_ddDF$Condition=="Stable"),]
+dd_Volatile <- Full_ddDF[which(Full_ddDF$Condition=="Volatile"),]
+
+# Correlations
+Full_dd_corr <- cor.test(Full_ddDF$pCommit, Full_ddDF$logkscore)
+Stable_dd_corr <- cor.test(dd_Stable$pCommit, dd_Stable$logkscore)
+Volatile_dd_corr <- cor.test(dd_Volatile$pCommit, dd_Volatile$logkscore)
+
+```
+
+# Correlation Matrices #
+``` {r corr, echo=FALSE}
+
+#Full correlation matrix data frame
+betas_corr <- allBetasCombined[, -ncol(allBetasCombined)]
+betas_corr <- betas_corr[-71,]
+bis_corr <- dfBIS[,-c(1,2,4)]
+upps_corr <- uppsDF[,-c(1:3)]
+questionnaire_df <- data.frame(betas_corr, bis_corr, upps_corr, logkscore)
+
+# Calculate correlation matrix
+questionnaire_COR <- cor(questionnaire_df, use = "complete.obs")
+
+# Calcualte the significnce of the correlations 
+# Initialize empty matrices p-values
+p_matrix <- matrix(NA, ncol = ncol(questionnaire_df), nrow = ncol(questionnaire_df),
+                   dimnames = list(names(questionnaire_df), names(questionnaire_df)))
+
+# Compute correlations and p-values
+for (i in 1:ncol(questionnaire_df)) {
+  for (j in 1:ncol(questionnaire_df)) {
+    temp <- cor.test(questionnaire_df[, i], questionnaire_df[, j], method = "pearson")
+    p_matrix[i, j] <- temp$p.value
+  }
+}
+
+# View the p-value matrix
+p_matrix
+
+# Define color palette for correlation plots
+col2 <- colorRampPalette(c(
+  "#053061", "#2166AC", "#4393C3", "#92C5DE", 
+  "#D1E5F0", "#FFFFFF", "#FDDBC7", "#F4A582", 
+  "#D6604D", "#B2182B", "#67001F"
+))
+
+# Correlation plot 
+corrplot(
+  questionnaire_COR, 
+  is.corr = FALSE, 
+  type = "upper", 
+  outline = TRUE, 
+  insig = "p-value", 
+  sig.level = 0.05, # Adjusted significance level
+  na.label = "NA", 
+  na.label.col = "grey", 
+  title = "Correlation Matrix", 
+  method = "color", 
+  tl.col = "black", 
+  tl.cex = 0.8, 
+  col = col2(200)
+)
+
+```
 
