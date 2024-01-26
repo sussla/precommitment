@@ -1,0 +1,2 @@
+﻿thisRow.t,notes,TrialNumber,Condition,OptionA,OptionB,EndA,EndB,combination,difference,change,Choice_RT,Choice_Wait,Choice_Commit,Choice_Miss,Press_hit,Play_RT,RT_trialClock_play,ITI_play,Square_timing,Press_miss,Play_win_A,Play_win_B,Late_RT,Play_lost,Play_lost_chosenA,Play_lost_chosenB,Precomm_RT,Precomm_B,Precomm_A,Precomm_miss,Earnings,participant,date,expName,frameRate,
+,,1,NA,39,35,52,22,0,4,13,3.77886062534526,False,True,False,0,0,0,0,0.62,0,False,False,0,False,False,False,5.914314290974289,False,True,False,52,xxxx,26012024,PreComm_Task,59.79603568672403,
